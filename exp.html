@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>कक्षा 4 इंटरैक्टिव अभ्यास पत्र</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Soothing Study -->
+    <!-- Application Structure Plan: The application is designed as an interactive practice test. It features a main navigation to switch between subjects (Hindi, English, Math, EVS). Each subject's questions are presented as interactive elements (inputs, clickable options) within cards. A 'Check Answers' button provides immediate feedback by highlighting correct/incorrect answers and dynamically updating a bar chart that visualizes the user's score. This task-oriented structure was chosen over a static document layout to create an engaging and effective learning tool that encourages active participation and provides instant progress tracking. -->
+    <!-- Visualization & Content Choices: 
+    - Report Info: Per-subject scores. -> Goal: Visualize user's performance. -> Viz/Presentation Method: Bar Chart. -> Interaction: Chart updates dynamically upon clicking 'Check Answers'. -> Justification: Provides immediate, easy-to-understand visual feedback on strengths and weaknesses. -> Library/Method: Chart.js/Canvas.
+    - Report Info: Exam questions (Fill-in-blanks, MCQs, True/False). -> Goal: Test user knowledge. -> Viz/Presentation Method: Interactive HTML form elements (inputs, buttons). -> Interaction: User types or clicks answers. -> Justification: Transforms passive reading into active learning, which is more effective for retention. -> Library/Method: HTML/CSS/JS.
+    - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Hind', sans-serif;
+            background-color: #fdfaf6;
+            color: #4a4a4a;
+        }
+        .nav-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .nav-btn.active {
+            background-color: #8dbf91;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .nav-btn:hover:not(.active) {
+            background-color: #e9f2ea;
+            transform: translateY(-1px);
+        }
+        .question-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #eee;
+        }
+        .question-card.correct {
+            background-color: #f0fff4;
+            border-left: 5px solid #48bb78;
+        }
+        .question-card.incorrect {
+            background-color: #fff5f5;
+            border-left: 5px solid #f56565;
+        }
+        .option-btn {
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .option-btn:hover {
+            background-color: #edf2f7;
+        }
+        .option-btn.selected {
+            background-color: #c6f6d5;
+            border-color: #68d391;
+        }
+        .check-btn {
+            background-color: #68d391;
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .check-btn:hover {
+            background-color: #48bb78;
+        }
+        input[type="text"], input[type="number"] {
+            border: 2px solid #cbd5e0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            width: 150px;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #8dbf91;
+            box-shadow: 0 0 0 2px rgba(141, 191, 145, 0.3);
+        }
+        .chart-container {
+             position: relative; 
+             width: 100%; 
+             max-width: 800px; 
+             margin-left: auto; 
+             margin-right: auto; 
+             height: 350px;
+             max-height: 400px;
+        }
+        @media (min-width: 768px) { 
+            .chart-container { 
+                height: 400px; 
+            } 
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#3a6b35]">कक्षा 4 इंटरैक्टिव अभ्यास पत्र</h1>
+            <p class="text-lg text-gray-600 mt-2">KARTIK GOYAL</p>
+            <p class="text-lg text-gray-600 mt-2">वार्षिक परीक्षा की तैयारी के लिए एक मजेदार और इंटरैक्टिव तरीका।</p>
+        </header>
+
+        <nav id="subject-nav" class="flex flex-wrap justify-center gap-3 sm:gap-4 mb-10">
+            <button data-subject="hindi" class="nav-btn active text-lg font-semibold py-3 px-6 bg-white rounded-full">हिंदी</button>
+            <button data-subject="english" class="nav-btn text-lg font-semibold py-3 px-6 bg-white rounded-full">English</button>
+            <button data-subject="math" class="nav-btn text-lg font-semibold py-3 px-6 bg-white rounded-full">गणित</button>
+            <button data-subject="evs" class="nav-btn text-lg font-semibold py-3 px-6 bg-white rounded-full">पर्यावरण अध्ययन</button>
+        </nav>
+
+        <main id="quiz-container" class="mb-12">
+        </main>
+
+        <section id="results-section" class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-bold text-center text-[#3a6b35] mb-4">आपकी प्रगति</h2>
+            <p class="text-center text-gray-600 mb-6">प्रत्येक विषय के लिए 'उत्तर जाँचें' बटन दबाने के बाद आपका स्कोर यहाँ दिखाई देगा।</p>
+            <div class="chart-container">
+                <canvas id="scoreChart"></canvas>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        const quizData = {
+            hindi: {
+                totalMarks: 25,
+                questions: [
+                    { type: 'fill', question: 'हमारा राष्ट्रीय पशु ___ है।', answer: 'बाघ', marks: 1, q_id: 'h1' },
+                    { type: 'fill', question: 'सूरज ___ दिशा से उगता है।', answer: 'पूर्व', marks: 1, q_id: 'h2' },
+                    { type: 'fill', question: 'हमें प्रतिदिन ___ पीना चाहिए।', answer: 'पानी', marks: 1, q_id: 'h3' },
+                    { type: 'fill', question: 'जयपुर को ___ शहर कहा जाता है।', answer: 'गुलाबी', marks: 1, q_id: 'h4' },
+                    { type: 'fill', question: 'एक सप्ताह में ___ दिन होते हैं।', answer: 'सात', marks: 1, q_id: 'h5' },
+                    { type: 'tf', question: 'गांधीजी को \'राष्ट्रपिता\' कहा जाता है।', answer: true, marks: 1, q_id: 'h6' },
+                    { type: 'tf', question: 'हमें अपने बड़ों का सम्मान नहीं करना चाहिए।', answer: false, marks: 1, q_id: 'h7' },
+                    { type: 'tf', question: 'इंद्रधनुष में सात रंग होते हैं।', answer: true, marks: 1, q_id: 'h8' },
+                    { type: 'tf', question: 'राजस्थान में थार रेगिस्तान है।', answer: true, marks: 1, q_id: 'h9' },
+                    { type: 'tf', question: 'पेड़ हमें ऑक्सीजन देते हैं।', answer: true, marks: 1, q_id: 'h10' }
+                ]
+            },
+            english: {
+                totalMarks: 25,
+                questions: [
+                    { type: 'fill', question: 'The sun rises in the ___.', answer: 'east', marks: 1, q_id: 'e1' },
+                    { type: 'fill', question: 'My favourite fruit is ___.', answer: 'mango', marks: 1, q_id: 'e2', isExample: true },
+                    { type: 'fill', question: 'A ___ has a long trunk.', answer: 'camel', marks: 1, q_id: 'e3' },
+                    { type: 'fill', question: 'We should always speak the ___.', answer: 'truth', marks: 1, q_id: 'e4' },
+                    { type: 'fill', question: 'There are ___ colours in a rainbow.', answer: 'seven', marks: 1, q_id: 'e5' },
+                    { type: 'opposite', question: 'Happy', answer: 'Sad', marks: 1, q_id: 'e6' },
+                    { type: 'opposite', question: 'Day', answer: 'Night', marks: 1, q_id: 'e7' },
+                    { type: 'opposite', question: 'Big', answer: 'Small', marks: 1, q_id: 'e8' },
+                    { type: 'opposite', question: 'Black', answer: 'White', marks: 1, q_id: 'e9' },
+                    { type: 'opposite', question: 'Hot', answer: 'Cold', marks: 1, q_id: 'e10' },
+                ]
+            },
+            math: {
+                totalMarks: 25,
+                questions: [
+                    { type: 'solve', question: '250 + 175 = ?', answer: 425, marks: 2, q_id: 'm1' },
+                    { type: 'solve', question: '500 - 120 = ?', answer: 380, marks: 2, q_id: 'm2' },
+                    { type: 'solve', question: '12 x 5 = ?', answer: 60, marks: 2, q_id: 'm3' },
+                    { type: 'solve', question: '45 ÷ 9 = ?', answer: 5, marks: 2, q_id: 'm4' },
+                    { type: 'solve', question: '100 के पाँच नोटों का कुल मूल्य कितना होगा?', answer: 500, marks: 2, q_id: 'm5' },
+                    { type: 'mcq', question: '1 किलोग्राम में कितने ग्राम होते हैं?', options: [100, 1000, 10, 500], answer: 1000, marks: 1, q_id: 'm6' },
+                    { type: 'mcq', question: 'एक दर्जन में कितनी वस्तुएँ होती हैं?', options: [10, 12, 20, 15], answer: 12, marks: 1, q_id: 'm7' },
+                    { type: 'mcq', question: 'एक साल में कितने महीने होते हैं?', options: [10, 11, 12, 13], answer: 12, marks: 1, q_id: 'm8' },
+                    { type: 'mcq', question: '7 का पहाड़ा 5 बार पढ़ने पर क्या आएगा?', options: [30, 35, 40, 25], answer: 35, marks: 1, q_id: 'm9' }
+                ]
+            },
+            evs: {
+                totalMarks: 25,
+                questions: [
+                    { type: 'mcq', question: 'हम कौन सा त्यौहार रंगों के साथ मनाते हैं?', options: ['दीपावली', 'होली', 'दशहरा', 'ईद'], answer: 'होली', marks: 1, q_id: 'evs1' },
+                    { type: 'mcq', question: 'राजस्थान का राज्य वृक्ष कौन सा है?', options: ['पीपल', 'खेजड़ी', 'नीम', 'बरगद'], answer: 'खेजड़ी', marks: 1, q_id: 'evs2' },
+                    { type: 'mcq', question: 'ऊंट को क्या कहा जाता है?', options: ['रेगिस्तान का राजा', 'रेगिस्तान का जहाज', 'जंगल का राजा', 'पहाड़ों का राजा'], answer: 'रेगिस्तान का जहाज', marks: 1, q_id: 'evs3' },
+                    { type: 'mcq', question: 'शरीर के किस अंग से हम सुनते हैं?', options: ['आँख', 'कान', 'नाक', 'मुँह'], answer: 'कान', marks: 1, q_id: 'evs4' },
+                    { type: 'mcq', question: 'हम किस पर्व पर मोमबत्ती और दीये जलाते हैं?', options: ['होली', 'ईद', 'क्रिसमस', 'दीपावली'], answer: 'दीपावली', marks: 1, q_id: 'evs5' }
+                ]
+            }
+        };
+
+        let currentSubject = 'hindi';
+        let scores = { hindi: 0, english: 0, math: 0, evs: 0 };
+        let answersChecked = { hindi: false, english: false, math: false, evs: false };
+        let scoreChart;
+
+        const quizContainer = document.getElementById('quiz-container');
+        const navButtons = document.querySelectorAll('.nav-btn');
+
+        function renderQuestions(subject) {
+            currentSubject = subject;
+            const data = quizData[subject];
+            quizContainer.innerHTML = '';
+
+            const questionsHtml = data.questions.map((q, index) => {
+                let questionHtml = '';
+                const questionNumber = `<strong>प्रश्न ${index + 1}:</strong> `;
+                if (q.type === 'fill') {
+                    questionHtml = `<p>${questionNumber}${q.question.replace('___', `<input type="text" id="${q.q_id}" class="mx-2" ${answersChecked[subject] ? 'disabled' : ''}>`)}</p>`;
+                } else if (q.type === 'tf') {
+                    questionHtml = `<p class="mb-2">${questionNumber}${q.question}</p>
+                    <div class="flex gap-4">
+                        <button class="option-btn" data-q-id="${q.q_id}" data-answer="true" ${answersChecked[subject] ? 'disabled' : ''}>सही</button>
+                        <button class="option-btn" data-q-id="${q.q_id}" data-answer="false" ${answersChecked[subject] ? 'disabled' : ''}>गलत</button>
+                    </div>`;
+                } else if (q.type === 'opposite') {
+                    questionHtml = `<p>${questionNumber}Write the opposite of <strong>${q.question}</strong>: <input type="text" id="${q.q_id}" class="ml-2" ${answersChecked[subject] ? 'disabled' : ''}></p>`;
+                } else if (q.type === 'solve') {
+                    questionHtml = `<p>${questionNumber}${q.question.replace('?', `<input type="number" id="${q.q_id}" class="ml-2" ${answersChecked[subject] ? 'disabled' : ''}>`)}</p>`;
+                } else if (q.type === 'mcq') {
+                    const optionsHtml = q.options.map(opt => 
+                        `<button class="option-btn" data-q-id="${q.q_id}" data-answer="${opt}" ${answersChecked[subject] ? 'disabled' : ''}>${opt}</button>`
+                    ).join('');
+                    questionHtml = `<p class="mb-2">${questionNumber}${q.question}</p><div class="flex flex-wrap gap-4">${optionsHtml}</div>`;
+                }
+                return `<div class="question-card" id="card-${q.q_id}">${questionHtml}</div>`;
+            }).join('');
+            
+            const buttonHtml = answersChecked[subject] ? '' : `<div class="text-center mt-8"><button class="check-btn" onclick="checkAnswers('${subject}')">उत्तर जाँचें</button></div>`;
+            quizContainer.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">${questionsHtml}</div>${buttonHtml}`;
+            
+            addOptionListeners();
+        }
+
+        function addOptionListeners() {
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if(btn.hasAttribute('disabled')) return;
+                    const qId = btn.dataset.qId;
+                    document.querySelectorAll(`.option-btn[data-q-id="${qId}"]`).forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                });
+            });
+        }
+
+        function checkAnswers(subject) {
+            if (answersChecked[subject]) return;
+            
+            let subjectScore = 0;
+            const data = quizData[subject];
+
+            data.questions.forEach(q => {
+                const card = document.getElementById(`card-${q.q_id}`);
+                let isCorrect = false;
+
+                if (q.type === 'fill' || q.type === 'opposite' || q.type === 'solve') {
+                    const userInput = document.getElementById(q.q_id).value.trim();
+                    if (q.type === 'solve' && !isNaN(userInput)) {
+                        isCorrect = parseFloat(userInput) === q.answer;
+                    } else {
+                        isCorrect = userInput.toLowerCase() === String(q.answer).toLowerCase();
+                    }
+                } else if (q.type === 'tf' || q.type === 'mcq') {
+                    const selectedOption = document.querySelector(`.option-btn[data-q-id="${q.q_id}"].selected`);
+                    if (selectedOption) {
+                        let userAnswer = selectedOption.dataset.answer;
+                        if(q.type === 'tf') userAnswer = (userAnswer === 'true');
+                        if(q.type === 'mcq' && !isNaN(q.answer)) userAnswer = parseFloat(userAnswer);
+                        isCorrect = userAnswer === q.answer;
+                    }
+                }
+
+                if (isCorrect) {
+                    subjectScore += q.marks;
+                    card.classList.add('correct');
+                } else {
+                    card.classList.add('incorrect');
+                }
+            });
+
+            scores[subject] = subjectScore;
+            answersChecked[subject] = true;
+            renderQuestions(subject); // Re-render to disable inputs/buttons
+            updateChart();
+        }
+
+        function updateChart() {
+            const subjectNames = {
+                hindi: 'हिंदी',
+                english: 'English',
+                math: 'गणित',
+                evs: 'पर्यावरण अध्ययन'
+            };
+            scoreChart.data.datasets[0].data = Object.keys(scores).map(s => scores[s]);
+            scoreChart.data.datasets[0].backgroundColor = Object.keys(scores).map(s => `rgba(${s === currentSubject ? '58, 107, 53' : '141, 191, 145'}, 0.7)`);
+            scoreChart.update();
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            const subjectNames = {
+                hindi: 'हिंदी',
+                english: 'English',
+                math: 'गणित',
+                evs: 'पर्यावरण अध्ययन'
+            };
+            scoreChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(quizData).map(key => subjectNames[key]),
+                    datasets: [{
+                        label: 'प्राप्त अंक',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: 'rgba(141, 191, 145, 0.7)',
+                        borderColor: 'rgba(58, 107, 53, 1)',
+                        borderWidth: 2,
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 25,
+                            title: {
+                                display: true,
+                                text: 'अंक',
+                                font: { size: 14 }
+                            }
+                        },
+                        x: {
+                           title: {
+                                display: true,
+                                text: 'विषय',
+                                font: { size: 14 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `अंक: ${context.raw} / 25`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                renderQuestions(button.dataset.subject);
+            });
+        });
+
+        window.onload = () => {
+            renderQuestions('hindi');
+            initChart();
+        };
+    </script>
+</body>
+</html>
